@@ -36,9 +36,63 @@ class PieceBag {
 class Tetrimino {
   constructor(type) {
     this.type = type;
+    this.rotation = 0;
   }
   getType() {
     return this.type;
+  }
+  rotateLeft() {
+    if (this.rotation > 0) {
+      this.roation--;
+    } else {
+      this.rotation = 3;
+    }
+  }
+  rotateRight() {
+    if (this.rotation < 3) {
+      this.roation++;
+    } else {
+      this.rotation = 0;
+    }
+  }
+  /**
+   * Returns the block for the current rotation.
+   * see: https://codeincomplete.com/posts/javascript-tetris/
+   */
+
+  getBlock() {
+    var positions = false;
+    var grid = new Array();
+    switch(this.type) {
+      case 'i':
+        positions = [0x0F00, 0x2222, 0x00F0, 0x4444];
+        break;
+      case 'o':
+        positions = [0xCC00, 0xCC00, 0xCC00, 0xCC00];
+        break;
+      case 't':
+        positions = [0x0E40, 0x4C40, 0x4E00, 0x4640];
+        break;
+      case 's':
+        positions = [0x06C0, 0x8C40, 0x6C00, 0x4620];
+        break;
+      case 'z':
+        positions = [0x0C60, 0x4C80, 0xC600, 0x2640];
+        break;
+      case 'j':
+        positions = [0x44C0, 0x8E00, 0x6440, 0x0E20];
+        break;
+      case 'l':
+        positions = [0x4460, 0x0E80, 0xC440, 0x2E00];
+        break;
+    }
+    for(var bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
+      if (positions[this.rotation] & bit) {
+        
+      } else {
+        console.log('0');
+      }
+    }
   }
   getColor() {
     color = '';
@@ -112,4 +166,6 @@ class PlayField {
 playField = new PlayField();
 playField.render();
 pieceBag = new PieceBag();
+tetrimino = new Tetrimino('i');
+tetrimino.getBlock();
 
