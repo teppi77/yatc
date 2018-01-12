@@ -62,7 +62,14 @@ class Tetrimino {
 
   getBlock() {
     var positions = false;
-    var grid = new Array();
+
+    // Initialize the grid.
+    var grid = new Array(4);
+    for (var i = 0; i < 4; i++) {
+      grid[i] = [0,0,0,0];
+    }
+    var x = 0;
+    var y = 0;
     switch(this.type) {
       case 'i':
         positions = [0x0F00, 0x2222, 0x00F0, 0x4444];
@@ -86,13 +93,26 @@ class Tetrimino {
         positions = [0x4460, 0x0E80, 0xC440, 0x2E00];
         break;
     }
+
     for(var bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
-      if (positions[this.rotation] & bit) {
-        
-      } else {
-        console.log('0');
+
+      var value = 0;
+      if (y > 0 && y % 4 == 0) {
+        x++;
+        y = 0;
       }
+
+      console.log('x : ' + x);
+      console.log('y : ' + y);
+
+      if (positions[this.rotation] & bit) {
+        value = 1;
+      }
+      grid[x][y] = value;
+
+      y++;
     }
+    return grid;
   }
   getColor() {
     color = '';
@@ -166,6 +186,57 @@ class PlayField {
 playField = new PlayField();
 playField.render();
 pieceBag = new PieceBag();
-tetrimino = new Tetrimino('i');
-tetrimino.getBlock();
+var piece = pieceBag.getPiece();
+console.log(piece);
+
+tetrimino = new Tetrimino(piece);
+var grid = tetrimino.getBlock();
+
+
+/**
+ * Game loop
+ */
+var lastFrameTimeMs = 0,
+  maxFPS = 5,
+  delta = 0,
+  timestep = 1000 / 60;
+
+function update(delta) {
+
+}
+
+function draw() {
+
+}
+
+function panic() {
+  delta = 0;
+}
+
+function mainLoop(timestamp) {
+  // Throttle the frame rate.
+  if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
+    requestAnimationFrame(mainLoop);
+    return;
+  }
+  delta += timestamp - lastFrameTimeMs;
+  lastFrameTimeMs = timestamp;
+
+  var numUpdateSteps = 0;
+  while (delta >= timestep) {
+    update(timestep);
+    delta -= timestep;
+    if (++numUpdateSteps >= 240) {
+      panic();
+      break;
+    }
+  }
+  draw();
+  requestAnimationFrame(mainLoop);
+}
+
+requestAnimationFrame(mainLoop);
+
+
+console.log(grid);
 
