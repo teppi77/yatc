@@ -1,4 +1,18 @@
-var tetriminos = ['i', 'o', 't', 's', 'z', 'j', 'l'];
+// Global constants
+var tetriminos = ['i', 'o', 't', 's', 'z', 'j', 'l'],
+    KEY     = { ESC: 27, SPACE: 32, LEFT: 37, Z: 90, X: 88, RIGHT: 39, DOWN: 40 },
+    DIR     = { CLOCKWISE: 0, ANTICLOCKWISE: 1, UP: 3, DOWN: 4, LEFT: 5, RIGHT: 6, MIN: 0, MAX: 3 },
+    COLORS  = { i: '#42d9f4', o: '#f4f141', t: '#e241f4', s: '#41f443', z: '#f44141', j: '#4152f4', l: '#f4a341' },
+    lastFrameTimeMs = 0,
+    maxFPS = 5,
+    delta = 0,
+    timestep = 1000 / 60;
+
+// Global variables
+var userActions = new Array(),
+    playing = false,
+    playField;
+
 
 /**
  * Makes sure, that we always get a new piece.
@@ -37,20 +51,22 @@ class Tetrimino {
   constructor(type) {
     this.type = type;
     this.rotation = 0;
+    this.x = 0;
+    this.y = 3;
   }
   getType() {
     return this.type;
   }
   rotateLeft() {
     if (this.rotation > 0) {
-      this.roation--;
+      this.rotation--;
     } else {
       this.rotation = 3;
     }
   }
   rotateRight() {
     if (this.rotation < 3) {
-      this.roation++;
+      this.rotation++;
     } else {
       this.rotation = 0;
     }
@@ -102,9 +118,6 @@ class Tetrimino {
         y = 0;
       }
 
-      console.log('x : ' + x);
-      console.log('y : ' + y);
-
       if (positions[this.rotation] & bit) {
         value = 1;
       }
@@ -113,33 +126,6 @@ class Tetrimino {
       y++;
     }
     return grid;
-  }
-  getColor() {
-    color = '';
-    switch(this.type) {
-      case 'i':
-        color = '42d9f4';
-        break;
-      case 'o':
-        color = 'f4f141';
-        break;
-      case 't':
-        color = 'e241f4';
-        break;
-      case 's':
-        color = '41f443';
-        break;
-      case 'z':
-        color = 'f44141';
-        break;
-      case 'j':
-        color = '4152f4';
-        break;
-      case 'l':
-        color = 'f4a341';
-        break;
-      return color;
-    }
   }
 }
 
@@ -158,6 +144,18 @@ class PlayField {
     context.lineJoin = "round";
     context.lineWidth = 1;
 
+    // Put the Tetriminos in place.
+    for (var i = 0; i < this.rows; i++) {
+      for (var j = 0; j < this.columns; j++) {
+        if (this.field[i][j] != 0) {
+          var color = COLORS[this.field[i][j]];
+          context.fillStyle = color;
+          context.fillRect(j * this.pixelRate, i * this.pixelRate, this.pixelRate, this.pixelRate);
+        }
+      }
+    }
+
+    // Draw the lines.
     for (var i = 0; i <= this.columns; i++) {
       context.beginPath();
       context.moveTo((this.pixelRate * i), 0);
@@ -182,27 +180,34 @@ class PlayField {
   }
 }
 
-// Initialize things
-playField = new PlayField();
-playField.render();
-pieceBag = new PieceBag();
-var piece = pieceBag.getPiece();
-console.log(piece);
+function keydown(ev) {
+  if (playing) {
+    switch(ev.keyCode) {
+      case KEY.LEFT:   userActions.push(DIR.LEFT);  break;
+      case KEY.RIGHT:  userActions.push(DIR.RIGHT); break;
+      case KEY.Z:      userActions.push(DIR.ANTICLOCKWISE); break;
+      case KEY.X:      userActions.push(DIR.CLOCKWISE); break;
+      case KEY.DOWN:   userActions.push(DIR.DOWN);  break;
+      // case KEY.ESC:    lose();                  break;
+    }
+  }
+  else if (ev.keyCode == KEY.SPACE) {
+    //play();
+  }
+};
 
-tetrimino = new Tetrimino(piece);
-var grid = tetrimino.getBlock();
+function handleUserActions(action) {
+  switch(action) {
+    case DIR.LEFT:  move(DIR.LEFT);  break;
+    case DIR.RIGHT: move(DIR.RIGHT); break;
+    case DIR.UP:    rotate();        break;
+    case DIR.DOWN:  drop();          break;
+  }
+};
 
-
-/**
- * Game loop
- */
-var lastFrameTimeMs = 0,
-  maxFPS = 5,
-  delta = 0,
-  timestep = 1000 / 60;
 
 function update(delta) {
-
+  playField.render();
 }
 
 function draw() {
@@ -232,11 +237,33 @@ function mainLoop(timestamp) {
     }
   }
   draw();
-  requestAnimationFrame(mainLoop);
+  // requestAnimationFrame(mainLoop);
 }
 
-requestAnimationFrame(mainLoop);
+function run() {
 
+// Initialize things
+  playField = new PlayField();
+  pieceBag = new PieceBag();
 
-console.log(grid);
+  var piece = pieceBag.getPiece();
+  tetrimino = new Tetrimino(piece);
+  var grid = tetrimino.getBlock();
+
+  console.log(COLORS[tetrimino.getType()]);
+
+  addEvents();
+  playing = true;
+  playField.render();
+ // requestAnimationFrame(mainLoop);
+
+}
+
+function addEvents() {
+  document.addEventListener('keydown', keydown, false);
+  //window.addEventListener('resize', resize, false);
+}
+
+run();
+
 
